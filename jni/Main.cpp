@@ -73,6 +73,7 @@
 #include "Config/TouchSystem.h"
 #include "XYZ/IconMinimap/DrawIcon.h"
 #include "XYZ/GameClass.h"
+#include "XYZ/LaylaView.h"
 #include "XYZ/ToString.h"
 #include "XYZ/SDK.h"
 #include "XYZ/DrawMinimap.h"

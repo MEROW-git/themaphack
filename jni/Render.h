@@ -197,6 +197,7 @@ void Render()
 
     //ShowWindow
 	if (showMenu) DrawMenu();
+	UpdateLaylaView();
 
     if (bFullChecked) NewDrawESP(ImGui::GetBackgroundDrawList(), screenWidth, screenHeight);
 	

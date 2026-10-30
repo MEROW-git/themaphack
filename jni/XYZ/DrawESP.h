@@ -71,18 +71,6 @@ void SetCameraParam(void *ins, Vector3 offsetPt, Quaternion qua, Transform tarOb
     }  
 oSetCameraParam(ins, baruNich, qua, tarObj, bLerp);
 }*/
-void DroneView() {
-    if (GetFieldOfView == 0) {
-        GetFieldOfView = get_fieldOfView();
-    }
-    if (SetFieldOfView > 0 && GetFieldOfView != 0) {
-        set_fieldOfView((float)GetFieldOfView + SetFieldOfView);
-    }
-    if (SetFieldOfView == 0 && GetFieldOfView != 0) {
-        set_fieldOfView((float)GetFieldOfView);
-    }
-}
-
 bool (*s_Emblem2)(void* _this);
 bool s_Emblem(void* _this) {
     if (Config.Visual.UnlockEmblem) {
@@ -411,8 +399,6 @@ void NewDrawESP(ImDrawList *draw, float screenWidth, float screenHeight) {
     if (!m_BattleBridge) return;
     auto bStartBattle = *(bool *) ((uintptr_t)m_BattleBridge + BattleBridge_bStartBattle());
     if (!bStartBattle) return;
-    DroneView();
-    
     if (Config.MinimapIcon) {
         if (!Config.HideLine)
             draw->AddRect(ImVec2(StartPos.x, StartPos.y), ImVec2(StartPos.x + MapSize, StartPos.y + MapSize), IM_COL32(255, 255, 255, 255));

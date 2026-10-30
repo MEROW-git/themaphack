@@ -52,6 +52,14 @@ void loadConfig() {
         read(fd, &Config, sizeof(Config));
         read(fd, &Aim, sizeof(Aim));
         read(fd, &SetFieldOfView, sizeof(SetFieldOfView));
+        unsigned char viewSettings[6] = {};
+        LaylaViewEnabled = false;
+        LaylaViewPreset = 0;
+        if (read(fd, viewSettings, sizeof(viewSettings)) == sizeof(viewSettings) &&
+            memcmp(viewSettings, "LVW1", 4) == 0) {
+            LaylaViewEnabled = viewSettings[4] != 0;
+            LaylaViewPreset = viewSettings[5] <= 2 ? viewSettings[5] : 0;
+        }
         close(fd);
 }
 void saveConfig(){
@@ -60,6 +68,10 @@ void saveConfig(){
     write(fd, &Config , sizeof(Config));
     write(fd, &Aim, sizeof(Aim));
     write(fd, &SetFieldOfView, sizeof(SetFieldOfView));
+    const unsigned char viewSettings[6] = {'L', 'V', 'W', '1',
+                                           static_cast<unsigned char>(LaylaViewEnabled),
+                                           static_cast<unsigned char>(LaylaViewPreset)};
+    write(fd, viewSettings, sizeof(viewSettings));
     close(fd);
 }
 
@@ -334,6 +346,13 @@ void DrawMenu() {
 			static int SelectInfo = 0;
             static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV;
             if (ImGui::BeginTabItem("Setting")) {
+                ImGui::BeginGroupPanel("Camera", ImVec2(-1.0f, 0.0f));
+                ImGui::Checkbox("Layla View", &LaylaViewEnabled);
+                const char *viewPresets[] = {"Normal", "Layla Style", "Extra Wide"};
+                ImGui::Combo("View preset", &LaylaViewPreset, viewPresets, 3);
+                ImGui::TextDisabled("Camera view only; game vision is unchanged.");
+                ImGui::EndGroupPanel();
+
                 ImGui::BeginGroupPanel("Menu Setting", ImVec2(-1.0f, 0.0f));
                 {
                     ImGui::Checkbox("Auto Resize", &bFlagAutoResize);

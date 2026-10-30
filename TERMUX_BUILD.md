@@ -2,6 +2,8 @@
 
 The native target is `libAkSoundEngine2.so`. It is not an installable APK. The independent `diagnostic-app` APK tests its own harmless JNI library and saves a display preference; it neither loads the game-dependent library nor modifies Mobile Legends.
 
+The optional camera presets and their test limits are described in [LAYLA_VIEW.md](LAYLA_VIEW.md).
+
 ## Requirements and Termux path
 
 **VERIFIED:** This checkout builds on Windows with Android NDK 29.0.13846066 for `arm64-v8a`, Android API 26 and C++17. **UNVERIFIED:** Running `ndk-build` natively on an ARM64 Termux phone. Google's official NDK distributions do not list an Android ARM64 development host; an x86-64 Linux NDK cannot execute directly on ARM64. An independently sourced ARM64-host-compatible NDK with `ndk-build` is required for the on-device path. [NDK downloads](https://developer.android.com/ndk/downloads), [ndk-build guide](https://developer.android.com/ndk/guides/ndk-build).
@@ -38,7 +40,7 @@ On a supported desktop host, install NDK 29.0.13846066. From PowerShell in the r
 & "$env:LOCALAPPDATA\Android\Sdk\ndk\29.0.13846066\ndk-build.cmd" -C . NDK_OUT=artifacts/obj NDK_LIBS_OUT=artifacts/libs APP_ABI=arm64-v8a -B -j4
 ```
 
-**VERIFIED:** The audit build succeeded on Windows. Full log: `artifacts/logs/ndk-build-arm64-audit.log`. The ELF header reports `ELF64`, `AArch64`, shared object; its dynamic symbol table exports `JNI_OnLoad`. SHA-256: `4cfe1774d892ea560ba6915a02bfb4eeb601f2d2e5912d5839ad2c5ad1449c58`. Artifact: `artifacts/libs/arm64-v8a/libAkSoundEngine2.so` (5,730,984 bytes).
+**VERIFIED:** The current Layla View build succeeded on Windows. Full log: `artifacts/logs/ndk-build-arm64-layla-view.log`. The ELF header reports `ELF64`, `AArch64`, shared object; its dynamic symbol table exports `JNI_OnLoad`. SHA-256: `ce30d8210cb66ef1dd10a3162b58b3183ea45c44d73f8e082d234c0f1d2c67f2`. Artifact: `artifacts/libs/arm64-v8a/libAkSoundEngine2.so` (5,733,144 bytes). The earlier audit log remains at `artifacts/logs/ndk-build-arm64-audit.log`.
 
 ## Build the separate diagnostic APK
 

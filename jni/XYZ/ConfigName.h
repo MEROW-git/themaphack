@@ -414,7 +414,11 @@ struct sConfig {
 };
 sConfig Config{0};
 
-static float SetFieldOfView = 0, GetFieldOfView = 0;
+// Kept outside sConfig so existing raw tmh.ini data keeps its layout.
+bool LaylaViewEnabled = false;
+int LaylaViewPreset = 0; // 0: Normal, 1: Layla Style, 2: Extra Wide
+
+static float SetFieldOfView = 0; // Legacy tmh.ini field; Layla View uses its own preset.
 static float sliderValue;
 static float RangeCombo = 10.0;
 static float RangePredict = 13.0;
