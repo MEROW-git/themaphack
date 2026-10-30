@@ -73,7 +73,6 @@
 #include "Config/JNIStuff.h"
 #include "Config/TouchSystem.h"
 #include "XYZ/IconMinimap/DrawIcon.h"
-#include "Tools/Login/Login.h"
 #include "XYZ/GameClass.h"
 #include "XYZ/ToString.h"
 #include "XYZ/SDK.h"

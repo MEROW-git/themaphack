@@ -7,32 +7,9 @@ LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/dobby/
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE            := libcurl
-LOCAL_SRC_FILES         := Tools/Login/library/curl-android-$(TARGET_ARCH_ABI)/lib/libcurl.a
-
-include $(PREBUILT_STATIC_LIBRARY)
-# ============================================================================#
-
-include $(CLEAR_VARS)
-LOCAL_MODULE            := libssl
-LOCAL_SRC_FILES         := Tools/Login/library/openssl-android-$(TARGET_ARCH_ABI)/lib/libssl.a
-
-include $(PREBUILT_STATIC_LIBRARY)
-# ============================================================================#
-
-include $(CLEAR_VARS)
-LOCAL_MODULE            := libcrypto
-LOCAL_SRC_FILES         := Tools/Login/library/openssl-android-$(TARGET_ARCH_ABI)/lib/libcrypto.a
-
-include $(PREBUILT_STATIC_LIBRARY)
-
-include $(CLEAR_VARS)
 LOCAL_MODULE := libAkSoundEngine2
 LOCAL_C_INCLUDES += $(LOCAL_PATH)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/imgui
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/Tools/Login
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/Tools/Login/library/curl-android-$(TARGET_ARCH_ABI)/include
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/Tools/Login/library/openssl-android-$(TARGET_ARCH_ABI)/include
 
 LOCAL_ARM_MODE := arm
 LOCAL_CFLAGS += -w -s -Wno-error=format-security -fvisibility=hidden -fpermissive -fexceptions
@@ -57,7 +34,6 @@ LOCAL_SRC_FILES := imgui/imgui.cpp    \
     Tools/fake_dlfcn.cpp \
     Tools/Il2Cpp.cpp \
     Tools/Tools.cpp \
-    Tools/Login/Tools.cpp \
     KittyMemory/KittyMemory.cpp \
     KittyMemory/MemoryPatch.cpp \
     KittyMemory/MemoryBackup.cpp \
@@ -77,7 +53,7 @@ LOCAL_SRC_FILES := imgui/imgui.cpp    \
     xHook/xh_version.c \
     Main.cpp
                      
-LOCAL_STATIC_LIBRARIES  := libcurl libssl libcrypto libdobby
+LOCAL_STATIC_LIBRARIES  := libdobby
 
 include $(BUILD_SHARED_LIBRARY)
 
