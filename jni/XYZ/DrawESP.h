@@ -136,7 +136,6 @@ void IsCampGrassLayer(void *instance, double dmgValue){
 	if (instance != nullptr){
 		if (Config.Visual.NoGrass){
 			dmgValue = 1000;
-			dmgValue == 9999;
 		}
 	}
 	oIsCampGrassLayer(instance, dmgValue);
@@ -189,6 +188,7 @@ double get_m_AttkSpeed(void* thiz){
 			return 123456;
 		}
 	}
+	return orig_get_m_AttkSpeed ? orig_get_m_AttkSpeed(thiz) : 0.0;
 }
 
 DefineHook(void, UpdateMapHack, (void * pThis)) {
@@ -397,6 +397,7 @@ void NewDrawESP(ImDrawList *draw, float screenWidth, float screenHeight) {
 	if (g_Token != g_Auth)
         return;
 	*/
+    if (!BattleData_m_BattleBridge || !BattleData_battleManager) return;
     if (Config.ESP.FPS) {
         std::string sFPS = "FPS: ";
         sFPS += std::to_string(fps.get());

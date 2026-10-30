@@ -2334,8 +2334,8 @@ struct String {
 		memcpy(getChars(), cStr, getLength() * 2);
 	}
 
-	const char *get_const_char() {
-		return toString().c_str();
+	std::string get_const_char() {
+		return toString();
 	}
 	
 	char *getChars() {
@@ -2597,7 +2597,7 @@ struct Dictionary
     };
 };
 
-void Il2CppAttach(const char *name);
+bool Il2CppAttach(const char *name);
 void *Il2CppGetImageByName(const char *image);
 void *Il2CppGetClassType(const char *image, const char *namespaze, const char *clazz);
 void *Il2CppCreateClassInstance(const char *image, const char *namespaze, const char *clazz);

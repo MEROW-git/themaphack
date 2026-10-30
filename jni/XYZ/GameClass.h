@@ -137,8 +137,10 @@ uintptr_t BattleData_m_BattleBridge, BattleData_battleManager;
 uintptr_t HookTryUseSkill2;
 void loadBattleData(std::string bData) {
     if(bData == "true"){
-		BattleData_m_BattleBridge = (uintptr_t) Il2CppGetStaticFieldOffset("Assembly-CSharp.dll", "", "BattleData", "m_BattleBridge");
-        BattleData_battleManager = (uintptr_t) Il2CppGetStaticFieldOffset("Assembly-CSharp.dll", "", "BattleManager", "Instance");
+		size_t bridge = Il2CppGetStaticFieldOffset("Assembly-CSharp.dll", "", "BattleData", "m_BattleBridge");
+        size_t manager = Il2CppGetStaticFieldOffset("Assembly-CSharp.dll", "", "BattleManager", "Instance");
+        BattleData_m_BattleBridge = bridge == static_cast<size_t>(-1) ? 0 : bridge;
+        BattleData_battleManager = manager == static_cast<size_t>(-1) ? 0 : manager;
     }
 }
 

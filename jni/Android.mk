@@ -3,7 +3,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := libdobby
 LOCAL_SRC_FILES := Tools/Dobby/libraries/$(TARGET_ARCH_ABI)/libdobby.a
-LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/dobby/
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/Tools/Dobby
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -11,11 +11,9 @@ LOCAL_MODULE := libAkSoundEngine2
 LOCAL_C_INCLUDES += $(LOCAL_PATH)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/imgui
 
-LOCAL_ARM_MODE := arm
-LOCAL_CFLAGS += -w -s -Wno-error=format-security -fvisibility=hidden -fpermissive -fexceptions
-LOCAL_CPPFLAGS += -w -s -Wno-error=format-security -fvisibility=hidden -Werror -std=c++17
-LOCAL_CPPFLAGS += -Wno-error=c++11-narrowing -fpermissive -Wall -fexceptions -Werror
-LOCAL_LDFLAGS += -Wl,-s -Wl,--gc-sections,--strip-all,-llog
+LOCAL_CFLAGS += -fvisibility=hidden
+LOCAL_CPPFLAGS += -std=c++17 -fexceptions -fvisibility=hidden
+LOCAL_LDFLAGS += -Wl,--gc-sections
 LOCAL_LDLIBS := -llog -landroid -lEGL -lGLESv2 -lGLESv3 -ldl -lz
 
 LOCAL_SRC_FILES := imgui/imgui.cpp    \

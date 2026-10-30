@@ -3,16 +3,6 @@ bool bFullChecked = false;
 int selectedFeatures = 1;
 android_app *i_App = 0;
 
-unsigned int gpCrash = 0xfa91b9cd;
-static int crash(int randomval){
-    volatile int *p = (int *)gpCrash;
-    p += randomval;
-    p += *p + randomval;
-    p = 0;
-    p += *p;
-    return *p;
-}
-
 void CenteredText(ImColor color, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -58,14 +48,15 @@ void HideMenu(bool& bShow) {
 
 void loadConfig() {
     int fd = open("/storage/emulated/0/Android/data/com.mobile.legends/tmh.ini", O_RDONLY);
+    if (fd < 0) return;
         read(fd, &Config, sizeof(Config));
         read(fd, &Aim, sizeof(Aim));
         read(fd, &SetFieldOfView, sizeof(SetFieldOfView));
         close(fd);
 }
 void saveConfig(){
-    int fd = open("/storage/emulated/0/Android/data/com.mobile.legends/tmh.ini", O_WRONLY | O_CREAT, 0600);
-    system("chmod 777 /storage/emulated/0/Android/data/com.mobile.legends/tmh.ini");
+    int fd = open("/storage/emulated/0/Android/data/com.mobile.legends/tmh.ini", O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0) return;
     write(fd, &Config , sizeof(Config));
     write(fd, &Aim, sizeof(Aim));
     write(fd, &SetFieldOfView, sizeof(SetFieldOfView));
@@ -225,8 +216,12 @@ void DrawMenu() {
         window_flags = ImGuiWindowFlags_None;
     }
     
-    loadBattleData("true");
-    bFullChecked = true;
+    static bool battle_data_initialized = false;
+    if (!battle_data_initialized) {
+        loadBattleData("true");
+        battle_data_initialized = true;
+    }
+    bFullChecked = BattleData_m_BattleBridge && BattleData_battleManager;
 
     std::string FULLTITLE = std::string("TMH") + std::string(" | ") + std::string(ABI);
     if (!ImGui::Begin(FULLTITLE.c_str(), 0, window_flags)) {

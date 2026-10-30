@@ -33,7 +33,6 @@
 #include <cstdio>
 #include <cstring>
 
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -79,7 +78,6 @@
 #include "XYZ/DrawMinimap.h"
 #include "XYZ/Minimap.h"
 #include "XYZ/DrawESP.h"
-#include "XYZ/Bypass.h"
 #include "DrawMenu.h"
 
 #undef stderr
@@ -97,12 +95,16 @@ using std::chrono::seconds;
 using std::this_thread::sleep_for;
 
 #include "xHook/xhook.h"
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmacro-redefined"
+#endif
 #include "consolas.hpp"
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #include "Render.h"
 
-#define FindLib "libil2cpp.so"
-#define FindLib "liblogic.so"
-#define FindLib "libunity.so"
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -209,11 +211,6 @@ bool IsVPNEnabled() {
 }
 
 
-bool FileExists(const std::string& filename) {
-    std::ifstream file(filename);
-    return file.good();
-}
-
 void eglSwapBuffers_handler(RegisterContext * ctx, const HookEntryInfo * info)
 {
     static int count = 0;
@@ -245,30 +242,37 @@ void hideLibrary() {
 }
 
 void *main_thread(void *) {
-    while (!m_IL2CPP) {
+    for (int attempt = 0; attempt < 30 && !m_IL2CPP; ++attempt) {
         m_IL2CPP = Tools::GetBaseAddress("liblogic.so");
-        sleep(1);
+        if (!m_IL2CPP) sleep(1);
+    }
+    if (!m_IL2CPP) {
+        LOGE("liblogic.so was not found; overlay initialization skipped");
+        return nullptr;
     }
     LOGI("Initialized Logic");
-    Il2CppAttach("liblogic.so");
-    sleep(5);
+    if (!Il2CppAttach("liblogic.so")) {
+        LOGE("Required IL2CPP exports are missing; overlay initialization skipped");
+        return nullptr;
+    }
+    bool assemblies_ready = false;
+    for (int attempt = 0; attempt < 30; ++attempt) {
+        if (Il2CppIsAssembliesLoaded()) {
+            assemblies_ready = true;
+            break;
+        }
+        sleep(1);
+    }
+    if (!assemblies_ready) {
+        LOGE("IL2CPP assemblies were not ready; overlay initialization skipped");
+        return nullptr;
+    }
 
-	hideLibrary();
-	
-	DobbyInstrument(dlsym(RTLD_NEXT, "eglSwapBuffers"), eglSwapBuffers_handler);
-	
-	Tools::Hook((void *) AntiCheatReporter_StartBattle, (void *) iAntiCheatReporter_StartBattle, (void **) &oAntiCheatReporter_StartBattle);
-    Tools::Hook((void *) AntiCheatReporter_EndBattle, (void *) iAntiCheatReporter_StartBattle, (void **) &oAntiCheatReporter_StartBattle);
-    Tools::Hook((void *) AntiCheatReporter_OnReleaseUseSkill, (void *) iAntiCheatReporter_OnReleaseUseSkill, (void **) &oAntiCheatReporter_OnReleaseUseSkill);
-    Tools::Hook((void *) AntiCheatReporter_OnTryUseSkill, (void *) iAntiCheatReporter_OnTryUseSkill, (void **) &oAntiCheatReporter_OnTryUseSkill);
-    Tools::Hook((void *) AntiCheatReporter_OnTryUseSkill2, (void *) iAntiCheatReporter_OnTryUseSkill2, (void **) &oAntiCheatReporter_OnTryUseSkill2);
-    Tools::Hook((void *) AntiCheatReporter_OnRequestSkillMsg, (void *) iAntiCheatReporter_OnRequestSkillMsg, (void **) &oAntiCheatReporter_OnRequestSkillMsg);
-    Tools::Hook((void *) AntiCheatReporter_HasSkillInfo, (void *) iAntiCheatReporter_HasSkillInfo, (void **) &oAntiCheatReporter_HasSkillInfo);
-    
-	Tools::Hook((void *) ShowBattleControl_SetAntiCheatReport, (void *) iSetAntiCheatReport, (void **) &oSetAntiCheatReport);
-	
-    pthread_t t;
-    return 0;
+    void *swap_buffers = dlsym(RTLD_DEFAULT, "eglSwapBuffers");
+    if (!swap_buffers || DobbyInstrument(swap_buffers, eglSwapBuffers_handler) != 0) {
+        LOGE("eglSwapBuffers instrumentation failed; overlay initialization skipped");
+    }
+    return nullptr;
 }
 
 void *g_Il2CppInitFunc, *g_Il2CppSymFunc;
@@ -276,6 +280,10 @@ void *g_Il2CppInitFunc, *g_Il2CppSymFunc;
 jint (JNICALL *Real_JNI_OnLoad)(JavaVM *vm, void *reserved);
 JNIEXPORT jint JNICALL Call_JNI_OnLoad(JavaVM *vm, void *reserved) {
     std::string apkPkg = getPackageName(GetJNIEnv(g_vm));
+    if (apkPkg.empty()) {
+        LOGE("Unable to determine host package name");
+        return JNI_ERR;
+    }
     std::string fromPath = std::string("/sdcard/Android/data/") + apkPkg.c_str() + std::string("/files/dragon2017/assets/comlibs/") + std::string(ARCH) + std::string("/libTMH.bytes");
     std::string toPath = std::string("/data/user/0/") + apkPkg.c_str() + std::string("/app_libs/libTMH.bytes");
  
@@ -283,12 +291,19 @@ JNIEXPORT jint JNICALL Call_JNI_OnLoad(JavaVM *vm, void *reserved) {
     if (!g_Il2CppInitFunc)g_Il2CppInitFunc = dlopen(toPath.c_str(), RTLD_LAZY);
     if (!g_Il2CppInitFunc)g_Il2CppInitFunc = dlopen(fromPath.c_str(), RTLD_LAZY);
         
+    if (!g_Il2CppInitFunc) {
+        const char *load_error = dlerror();
+        LOGE("Required libTMH.bytes could not be loaded: %s", load_error ? load_error : "unknown error");
+        return JNI_ERR;
+    }
     if (!g_Il2CppSymFunc)g_Il2CppSymFunc = dlsym(g_Il2CppInitFunc, "JNI_OnLoad");
+    if (!g_Il2CppSymFunc) {
+        LOGE("libTMH.bytes has no JNI_OnLoad export");
+        return JNI_ERR;
+    }
     
     auto AkLoad = (jint(*)(JavaVM *, void *))g_Il2CppSymFunc;
-    AkLoad(vm, nullptr);
-    
-    return JNI_VERSION_1_6;
+    return AkLoad(vm, reserved);
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
@@ -297,9 +312,13 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return JNI_ERR;
     }
+    jint result = Call_JNI_OnLoad(vm, reserved);
+    if (result == JNI_ERR) return JNI_ERR;
     pthread_t t;
-    pthread_create(&t, NULL, main_thread, nullptr);
-	//pthread_create(&t, NULL, bypassMemcmp, NULL);
-	//pthread_create(&t, nullptr, libentec, nullptr);
-    return Call_JNI_OnLoad(vm, reserved);
+    if (pthread_create(&t, nullptr, main_thread, nullptr) == 0) {
+        pthread_detach(t);
+    } else {
+        LOGE("Overlay worker thread could not start");
+    }
+    return result;
 }

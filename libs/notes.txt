@@ -1,15 +1,3 @@
-I can not guarantee you that this mod is 100% safe from being banned.
-
-But i can minimize the banned risk up to 98% as long as you follow my guidance.
-
-The rest 2 % is depend on your playstyle and report from other player.
-
-Guide: How to not getting banned (bypass m**nt0n cheat detection)
-https://www.patreon.com/posts/guide-how-to-not-130259867?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link
-
-Paste Location:
-/storage/emulated/0/Android/data/com.mobile.legends/files/dragon2017/assets/comlibs/arm64-v8a
-
-Visit our Github page for Installation & Usage:
-https://github.com/anggorodhanumurti/themaphack
+Legacy installation and ban-risk claims from this file were unverified and have been removed.
+See ../README.md for the supported build procedure, compatibility limits, and privacy notes.
 

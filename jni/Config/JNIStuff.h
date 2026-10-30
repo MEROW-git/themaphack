@@ -76,11 +76,23 @@ void showAlertDialog(char* strtitle, char* strbody) {
 }
 
 jobject getJNIContext(JNIEnv *env) {
+    if (!env) return nullptr;
     jclass activityThreadCls = env->FindClass("android/app/ActivityThread");
+    if (!activityThreadCls) return nullptr;
     jmethodID currentActivityThread = env->GetStaticMethodID(activityThreadCls, "currentActivityThread", "()Landroid/app/ActivityThread;");
+    if (!currentActivityThread) {
+        env->DeleteLocalRef(activityThreadCls);
+        return nullptr;
+    }
     jobject activityThreadObj = env->CallStaticObjectMethod(activityThreadCls, currentActivityThread);
+    if (!activityThreadObj) {
+        env->DeleteLocalRef(activityThreadCls);
+        return nullptr;
+    }
     jmethodID getApplication = env->GetMethodID(activityThreadCls, "getApplication", "()Landroid/app/Application;");
-    jobject context = env->CallObjectMethod(activityThreadObj, getApplication);
+    jobject context = getApplication ? env->CallObjectMethod(activityThreadObj, getApplication) : nullptr;
+    env->DeleteLocalRef(activityThreadObj);
+    env->DeleteLocalRef(activityThreadCls);
     return context;
 }
 
@@ -91,7 +103,7 @@ int GetSDKVersion(JNIEnv *env) {
     return (int)sdkInt;
 }
 
-const char *OpenYt(JNIEnv *env, jobject thiz) {
+void OpenYt(JNIEnv *env, jobject thiz) {
     const char* urlStr = "vnd.youtube://@haxxcker/videos";
 
     jclass intentClass = env->FindClass("android/content/Intent");
@@ -194,11 +206,26 @@ const char *GetDeviceUniqueIdentifier(JNIEnv *env, const char *uuid) {
 
 std::string getPackageName(JNIEnv *env) {
 	jobject context = getJNIContext(env);
-    jclass contextClass = env->FindClass("android/content/Context");
+    if (!context || env->ExceptionCheck()) return {};
+    jclass contextClass = env->GetObjectClass(context);
+    if (!contextClass) {
+        env->DeleteLocalRef(context);
+        return {};
+    }
     jmethodID getPackageNameId = env->GetMethodID(contextClass, "getPackageName", "()Ljava/lang/String;");
-    auto str = (jstring) env->CallObjectMethod(context, getPackageNameId);
-    const char* chars = env->GetStringUTFChars(str, 0);
-	return std::string(chars);
+    auto str = getPackageNameId ? (jstring)env->CallObjectMethod(context, getPackageNameId) : nullptr;
+    std::string package_name;
+    if (str && !env->ExceptionCheck()) {
+        const char* chars = env->GetStringUTFChars(str, nullptr);
+        if (chars) {
+            package_name = chars;
+            env->ReleaseStringUTFChars(str, chars);
+        }
+        env->DeleteLocalRef(str);
+    }
+    env->DeleteLocalRef(contextClass);
+    env->DeleteLocalRef(context);
+	return package_name;
 }
 
 bool deleteFile(JNIEnv *env, std::string filename) {

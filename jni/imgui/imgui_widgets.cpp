@@ -3129,7 +3129,8 @@ bool ImGui::SliderInt(const char* label, int* v, int v_min, int v_max, const cha
 
 bool ImGui::CustomSlider(const char* label, float* value, float minValue, float maxValue, const ImVec2& size)
 {
-    ImGui::Text(label);
+    ImGui::TextUnformatted(label);
+    if (!value || size.x <= 0.0f || maxValue <= minValue) return false;
 
     ImGuiWindow* window = ImGui::GetCurrentWindow();
     ImDrawList* drawList = window->DrawList;
@@ -3147,15 +3148,19 @@ bool ImGui::CustomSlider(const char* label, float* value, float minValue, float 
     drawList->AddCircleFilled(ImVec2(grabX, pos.y + sliderHeight / 2), grabRadius, IM_COL32(255, 165, 0, 255)); 
 
     ImGui::InvisibleButton(label, size);
+    bool value_changed = false;
     if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
     {
         float mouseX = ImGui::GetMousePos().x;
         normalizedValue = (mouseX - pos.x) / sliderWidth;
         normalizedValue = normalizedValue < 0.0f ? 0.0f : (normalizedValue > 1.0f ? 1.0f : normalizedValue);
-        *value = minValue + normalizedValue * (maxValue - minValue);
+        const float new_value = minValue + normalizedValue * (maxValue - minValue);
+        value_changed = new_value != *value;
+        *value = new_value;
     }
 
-    ImGui::Dummy(size); 
+    ImGui::Dummy(size);
+    return value_changed;
 }
 
 bool ImGui::SliderInt2(const char* label, int v[2], int v_min, int v_max, const char* format, ImGuiSliderFlags flags)

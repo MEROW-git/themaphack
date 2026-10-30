@@ -160,7 +160,7 @@ void *Il2CppGetMethodOffset(const char *image, const char *namespaze, const char
 	}
 	void *klass = Il2CppGetClassType(image, namespaze, clazz);
 	if (!klass) {
-		__android_log_print(ANDROID_LOG_ERROR, g_LogTag, "Can't find method %s!", clazz, name);
+		__android_log_print(ANDROID_LOG_ERROR, g_LogTag, "Can't find method %s in class %s!", name, clazz);
 		return 0;
 	}
 	void **method = (void**)il2cpp_class_get_method_from_name(klass, name, argsCount);
@@ -223,7 +223,7 @@ size_t Il2CppGetFieldOffset(const char *image, const char *namespaze, const char
 	}
 	void *klass = Il2CppGetClassType(image, namespaze, clazz);
 	if (!klass) {
-		__android_log_print(ANDROID_LOG_ERROR, g_LogTag, "Can't find field %s!", clazz, name);
+		__android_log_print(ANDROID_LOG_ERROR, g_LogTag, "Can't find field %s in class %s!", name, clazz);
 		return -1;
 	}
 	void *field = il2cpp_class_get_field_from_name(klass, name);
@@ -244,7 +244,7 @@ size_t Il2CppGetStaticFieldOffset(const char *image, const char *namespaze, cons
     }
     void *klass = Il2CppGetClassType(image, namespaze, clazz);
     if(!klass) {
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "Can't find field %s!", clazz, name);
+        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "Can't find field %s in class %s!", name, clazz);
         return -1;
     }
 
@@ -257,17 +257,17 @@ size_t Il2CppGetStaticFieldOffset(const char *image, const char *namespaze, cons
 }
 
 bool Il2CppIsAssembliesLoaded() {
+	if (!il2cpp_domain_get || !il2cpp_domain_get_assemblies) return false;
+	void *domain = il2cpp_domain_get();
+	if (!domain) return false;
 	size_t size;
-	void **assemblies = il2cpp_domain_get_assemblies(il2cpp_domain_get(), &size);
+	void **assemblies = il2cpp_domain_get_assemblies(domain, &size);
 	return size != 0 && assemblies != 0;
 }
 
-void Il2CppAttach(const char *name) {
+bool Il2CppAttach(const char *name) {
 	void *handle = xdl_open(name, 0);
-	while (!handle) {
-		handle = xdl_open(name, 0);
-		sleep(1);
-	}
+	if (!handle) return false;
 	il2cpp_assembly_get_image = (const void *(*)(const void *)) xdl_sym(handle, "il2cpp_assembly_get_image", nullptr);
     il2cpp_domain_get = (void *(*)()) xdl_sym(handle, "il2cpp_domain_get", nullptr);
     il2cpp_domain_get_assemblies = (void **(*)(const void* , size_t*)) xdl_sym(handle, "il2cpp_domain_get_assemblies", nullptr);
@@ -292,4 +292,7 @@ void Il2CppAttach(const char *name) {
     il2cpp_method_get_name = (const char *(*)(void *)) xdl_sym(handle, "il2cpp_method_get_name", nullptr);
     il2cpp_object_new = (void *(*)(void *)) xdl_sym(handle, "il2cpp_object_new", nullptr);
     xdl_close(handle);
+	return il2cpp_assembly_get_image && il2cpp_domain_get && il2cpp_domain_get_assemblies &&
+	       il2cpp_image_get_name && il2cpp_class_from_name && il2cpp_class_get_field_from_name &&
+	       il2cpp_class_get_method_from_name && il2cpp_field_get_offset;
 }

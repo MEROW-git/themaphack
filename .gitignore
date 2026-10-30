@@ -1,1 +1,7 @@
 /obj/
+/artifacts/
+/diagnostic-app/.gradle/
+/diagnostic-app/.kotlin/
+/diagnostic-app/build/
+/diagnostic-app/local.properties
+/diagnostic-app/app/build/
