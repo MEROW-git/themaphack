@@ -1,5 +1,7 @@
 # Android ARM64 build and validation
 
+The latest native build and runtime diagnostic instructions are in [LOADING_FREEZE_REPORT.md](LOADING_FREEZE_REPORT.md). The hash below records that build; earlier logs remain as historical snapshots.
+
 For the October 2026 target audit, see [COMPATIBILITY_2.2.16.md](COMPATIBILITY_2.2.16.md) and the [interface inventory](UNVERIFIED_GAME_INTERFACES.md).
 
 The native target is `libAkSoundEngine2.so`. It is not an installable APK. The independent `diagnostic-app` APK tests its own harmless JNI library and saves a display preference; it neither loads the game-dependent library nor modifies Mobile Legends.
@@ -42,7 +44,7 @@ On a supported desktop host, install NDK 29.0.13846066. From PowerShell in the r
 & "$env:LOCALAPPDATA\Android\Sdk\ndk\29.0.13846066\ndk-build.cmd" -C . NDK_OUT=artifacts/obj NDK_LIBS_OUT=artifacts/libs APP_ABI=arm64-v8a -B -j4
 ```
 
-**VERIFIED:** The current 2.2.16 source audit cross-build succeeded on Windows. Full verbose log: `artifacts/logs/ndk-build-arm64-2.2.16-full.log`. The ELF header reports `ELF64`, `AArch64`, shared object; its dynamic symbol table exports `JNI_OnLoad`. Artifact: `artifacts/libs/arm64-v8a/libAkSoundEngine2.so` (5,705,432 bytes), SHA-256 `7a6533825870609ff62683aceb1ae08157071d84ee67c9255403535bf11b7e94`. No game runtime was tested.
+**VERIFIED:** The current loading-diagnostic cross-build succeeded on Windows. Full verbose log: `artifacts/logs/ndk-build-arm64-loading-debug-full.log`. The ELF header reports `ELF64`, `AArch64`, shared object; its dynamic symbol table exports `JNI_OnLoad`. Artifact: `artifacts/libs/arm64-v8a/libAkSoundEngine2.so` (5,710,968 bytes), SHA-256 `b8454cfe384bbaabf2c90753d3ae74c45489fa0f69f0a3f9e13f866a2953eaa4`. No game runtime was tested.
 
 ## Build the separate diagnostic APK
 

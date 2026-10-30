@@ -9,6 +9,9 @@
 #include <chrono>
 #include <fstream>
 #include <thread>
+#include <exception>
+#include <cerrno>
+#include <atomic>
 #include <pthread.h>
 #include <dirent.h>
 #include <libgen.h>
@@ -70,6 +73,7 @@
 #include "XYZ/ConfigName.h"
 #include "Config/setup.h"
 #include "Config/JNIStuff.h"
+#include "StartupForwarder.h"
 #include "Config/TouchSystem.h"
 #include "XYZ/IconMinimap/DrawIcon.h"
 #include "XYZ/GameClass.h"
@@ -214,12 +218,19 @@ bool IsVPNEnabled() {
 
 void eglSwapBuffers_handler(RegisterContext * ctx, const HookEntryInfo * info)
 {
-    static int count = 0;
-    if(count < 10){
-        count++;
-    }else{
+    static std::atomic<int> count{0};
+    static std::atomic_flag rendering = ATOMIC_FLAG_INIT;
+    if (count.fetch_add(1, std::memory_order_relaxed) < 10 ||
+        eglGetCurrentContext() == EGL_NO_CONTEXT ||
+        rendering.test_and_set(std::memory_order_acquire)) return;
+    try {
         Render();
+    } catch (const std::exception& error) {
+        LOGE("C++ exception in render callback: %s", error.what());
+    } catch (...) {
+        LOGE("Unknown C++ exception in render callback");
     }
+    rendering.clear(std::memory_order_release);
 }
 
 void *bypassMemcmp(void *arg) {
@@ -243,6 +254,7 @@ void hideLibrary() {
 }
 
 void *main_thread(void *) {
+    LOGI("Overlay worker started; waiting for liblogic.so");
     for (int attempt = 0; attempt < 30 && !m_IL2CPP; ++attempt) {
         m_IL2CPP = Tools::GetBaseAddress("liblogic.so");
         if (!m_IL2CPP) sleep(1);
@@ -272,13 +284,53 @@ void *main_thread(void *) {
     void *swap_buffers = dlsym(RTLD_DEFAULT, "eglSwapBuffers");
     if (!swap_buffers || DobbyInstrument(swap_buffers, eglSwapBuffers_handler) != 0) {
         LOGE("eglSwapBuffers instrumentation failed; overlay initialization skipped");
+    } else {
+        LOGI("eglSwapBuffers instrumentation installed");
     }
     return nullptr;
 }
 
-void *g_Il2CppInitFunc, *g_Il2CppSymFunc;
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved);
 
-jint (JNICALL *Real_JNI_OnLoad)(JavaVM *vm, void *reserved);
+static void* OpenOriginalLibrary(const char* path) {
+    LOGI("Opening original library at %s", path);
+    dlerror();
+    void* handle = dlopen(path, RTLD_LAZY);
+    if (!handle) {
+        const char* error = dlerror();
+        LOGE("Original library open failed at %s: %s", path, error ? error : "unknown error");
+    } else {
+        LOGI("Original library opened at %s", path);
+    }
+    return handle;
+}
+
+static bool CopyOriginalLibrary(const char* source, const char* destination) {
+    if (CopyFile(source, destination)) return true;
+    LOGE("Original library copy failed from %s to %s: errno=%d",
+         source, destination, errno);
+    return false;
+}
+
+static void* FindOriginalEntry(void* handle, const char* name) {
+    dlerror();
+    void* entry = dlsym(handle, name);
+    const char* error = dlerror();
+    if (!entry || error) LOGE("Original library %s lookup failed: %s", name, error ? error : "missing symbol");
+    return error ? nullptr : entry;
+}
+
+static int InvokeOriginalEntry(void* entry, void* vm, void* reserved) {
+    auto onLoad = reinterpret_cast<jint (*)(JavaVM*, void*)>(entry);
+    LOGI("Calling original JNI_OnLoad");
+    const auto started = std::chrono::steady_clock::now();
+    const int version = onLoad(static_cast<JavaVM*>(vm), reserved);
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - started).count();
+    LOGI("Original JNI_OnLoad completed in %lld ms", static_cast<long long>(elapsed));
+    return version;
+}
+
 JNIEXPORT jint JNICALL Call_JNI_OnLoad(JavaVM *vm, void *reserved) {
     JNIEnv *env = nullptr;
     if (!vm || vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK || !env) {
@@ -287,47 +339,66 @@ JNIEXPORT jint JNICALL Call_JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
     std::string apkPkg = getPackageName(env);
     if (apkPkg.empty()) {
+        if (env->ExceptionCheck()) {
+            LOGE("Java exception while obtaining host package name");
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
         LOGE("Unable to determine host package name");
         return JNI_ERR;
     }
-    std::string fromPath = std::string("/sdcard/Android/data/") + apkPkg.c_str() + std::string("/files/dragon2017/assets/comlibs/") + std::string(ARCH) + std::string("/libTMH.bytes");
-    std::string toPath = std::string("/data/user/0/") + apkPkg.c_str() + std::string("/app_libs/libTMH.bytes");
- 
-    if (!CopyFile(fromPath.c_str(), toPath.c_str())) {
-        LOGE("Could not copy required libTMH.bytes; attempting its original path");
-    }
-    if (!g_Il2CppInitFunc)g_Il2CppInitFunc = dlopen(toPath.c_str(), RTLD_LAZY);
-    if (!g_Il2CppInitFunc)g_Il2CppInitFunc = dlopen(fromPath.c_str(), RTLD_LAZY);
-        
-    if (!g_Il2CppInitFunc) {
-        const char *load_error = dlerror();
-        LOGE("Required libTMH.bytes could not be loaded: %s", load_error ? load_error : "unknown error");
+    startup::Paths paths;
+    if (!startup::BuildPaths(apkPkg, ARCH, paths)) {
+        LOGE("Invalid package or ABI while locating original library");
         return JNI_ERR;
     }
-    if (!g_Il2CppSymFunc)g_Il2CppSymFunc = dlsym(g_Il2CppInitFunc, "JNI_OnLoad");
-    if (!g_Il2CppSymFunc) {
-        LOGE("libTMH.bytes has no JNI_OnLoad export");
+    LOGI("Original library source: %s", paths.source.c_str());
+    LOGI("Original library copy: %s", paths.copied.c_str());
+    const std::string copyDirectory = paths.copied.substr(0, paths.copied.find_last_of('/'));
+    if (mkdir(copyDirectory.c_str(), 0700) != 0 && errno != EEXIST) {
+        LOGE("Could not create original-library directory %s: errno=%d",
+             copyDirectory.c_str(), errno);
+    }
+    const startup::Operations ops{CopyOriginalLibrary, OpenOriginalLibrary, FindOriginalEntry,
+                                  InvokeOriginalEntry};
+    const auto result = startup::ForwardOriginal(paths, vm, reserved,
+                                                 reinterpret_cast<void*>(&JNI_OnLoad), ops);
+    if (!result.copySucceeded) LOGE("Original library copy failed; stale destination skipped");
+    if (result.status != startup::Status::Success) {
+        LOGE("Original JNI forwarding failed: %s", startup::StatusName(result.status));
         return JNI_ERR;
     }
-    
-    auto AkLoad = (jint(*)(JavaVM *, void *))g_Il2CppSymFunc;
-    return AkLoad(vm, reserved);
+    LOGI("Original JNI_OnLoad returned 0x%x (copied=%d)", result.jniVersion,
+         result.usedCopy ? 1 : 0);
+    return result.jniVersion;
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     if (!vm) return JNI_ERR;
+    LOGI("Replacement JNI_OnLoad entered, ABI=%s", ARCH);
     g_vm = vm;
     JNIEnv *env;
     if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return JNI_ERR;
     }
-    jint result = Call_JNI_OnLoad(vm, reserved);
+    jint result;
+    try {
+        result = Call_JNI_OnLoad(vm, reserved);
+    } catch (const std::exception& error) {
+        LOGE("C++ exception during JNI_OnLoad: %s", error.what());
+        return JNI_ERR;
+    } catch (...) {
+        LOGE("Unknown C++ exception during JNI_OnLoad");
+        return JNI_ERR;
+    }
     if (result == JNI_ERR) return JNI_ERR;
     pthread_t t;
-    if (pthread_create(&t, nullptr, main_thread, nullptr) == 0) {
+    const int threadResult = pthread_create(&t, nullptr, main_thread, nullptr);
+    if (threadResult == 0) {
         pthread_detach(t);
+        LOGI("Overlay worker thread created");
     } else {
-        LOGE("Overlay worker thread could not start");
+        LOGE("Overlay worker thread could not start: pthread_create=%d", threadResult);
     }
     return result;
 }

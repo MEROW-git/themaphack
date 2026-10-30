@@ -1,5 +1,7 @@
 # 2.2.16 build-audit changes
 
+This records the earlier audit commit. For the subsequent loading-freeze investigation and current artifact, see [LOADING_FREEZE_REPORT.md](LOADING_FREEZE_REPORT.md).
+
 **Result: BUILD SUCCESSFUL — GAME COMPATIBILITY UNVERIFIED.**
 
 ## Source changes

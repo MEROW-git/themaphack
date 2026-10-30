@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cerrno>
+
 #if defined(__aarch64__)
 #define ABI  "[x64]"
 #define ARCH "arm64-v8a"
@@ -207,7 +209,10 @@ const char *GetDeviceUniqueIdentifier(JNIEnv *env, const char *uuid) {
 std::string getPackageName(JNIEnv *env) {
 	if (!env) return {};
 	jobject context = getJNIContext(env);
-    if (!context || env->ExceptionCheck()) return {};
+    if (!context || env->ExceptionCheck()) {
+        if (context) env->DeleteLocalRef(context);
+        return {};
+    }
     jclass contextClass = env->GetObjectClass(context);
     if (!contextClass) {
         env->DeleteLocalRef(context);
@@ -222,8 +227,8 @@ std::string getPackageName(JNIEnv *env) {
             package_name = chars;
             env->ReleaseStringUTFChars(str, chars);
         }
-        env->DeleteLocalRef(str);
     }
+    if (str) env->DeleteLocalRef(str);
     env->DeleteLocalRef(contextClass);
     env->DeleteLocalRef(context);
 	return package_name;
@@ -257,12 +262,61 @@ bool removeFilesExcept(JNIEnv *env, const std::vector<std::string>& filesToKeep)
 }
 
 bool CopyFile(const char *in, const char *out) {
-    std::ifstream src(in, std::ios::binary);
-    if (!src) return false;
-    std::ofstream dest(out, std::ios::binary);
-    if (!dest) return false;
-    dest << src.rdbuf();
-    return src && dest;
+    if (!in || !out) { errno = EINVAL; return false; }
+    std::string pattern = std::string(out) + ".tmpXXXXXX";
+    std::vector<char> temporary(pattern.begin(), pattern.end());
+    temporary.push_back('\0');
+    int source = open(in, O_RDONLY | O_CLOEXEC);
+    if (source < 0) return false;
+    struct stat metadata;
+    if (fstat(source, &metadata) != 0) {
+        const int error = errno;
+        close(source);
+        errno = error;
+        return false;
+    }
+    if (!S_ISREG(metadata.st_mode) || metadata.st_size <= 0) {
+        close(source);
+        errno = EINVAL;
+        return false;
+    }
+
+    int destination = mkstemp(temporary.data());
+    if (destination < 0) {
+        const int error = errno;
+        close(source);
+        errno = error;
+        return false;
+    }
+
+    char buffer[64 * 1024];
+    off_t copied = 0;
+    bool success = true;
+    while (success) {
+        ssize_t count = read(source, buffer, sizeof(buffer));
+        if (count < 0 && errno == EINTR) continue;
+        if (count < 0) { success = false; break; }
+        if (count == 0) break;
+        copied += count;
+        for (ssize_t offset = 0; offset < count;) {
+            ssize_t written = write(destination, buffer + offset, count - offset);
+            if (written < 0 && errno == EINTR) continue;
+            if (written <= 0) { success = false; break; }
+            offset += written;
+        }
+    }
+    if (copied != metadata.st_size) { errno = EIO; success = false; }
+    int copyError = success ? 0 : errno;
+    if (close(destination) != 0) {
+        if (success) copyError = errno;
+        success = false;
+    }
+    close(source);
+    if (success && rename(temporary.data(), out) == 0) return true;
+    const int error = success ? errno : copyError;
+    unlink(temporary.data());
+    errno = error ? error : EIO;
+    return false;
 }
 
 bool CheckFile(const std::string &name) {

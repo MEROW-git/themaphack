@@ -1,5 +1,7 @@
 # MLBB 2.2.16.12322 / 2.2.16a compatibility audit
 
+This is the prior build snapshot. The latest library and log are described in [LOADING_FREEZE_REPORT.md](LOADING_FREEZE_REPORT.md); the reported freeze target uses a different version string.
+
 **Result: BUILD SUCCESSFUL — GAME COMPATIBILITY UNVERIFIED.** This is a source and cross-build audit, not a game runtime test. Status labels below mean **VERIFIED** by this checkout or build output, **UNVERIFIED** without exact-version runtime evidence, **BROKEN** for a demonstrated defect, and **NOT IMPLEMENTED** when no active integration exists.
 
 ## Revisions and scope
