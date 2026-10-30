@@ -5,3 +5,4 @@
 /diagnostic-app/build/
 /diagnostic-app/local.properties
 /diagnostic-app/app/build/
+/diagnostic-app/app/.cxx/

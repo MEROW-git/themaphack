@@ -1,10 +1,12 @@
 # Themaphack build and compatibility notes
 
-This repository builds an Android ARM64 native library, **not an installable game APK**. The separate diagnostic-app project builds an APK that reports the device ABI, Android API level, its own package name, and its own native library directory. It does not load the native library or inspect or modify the installed game.
+This repository builds an Android ARM64 native library, **not an installable game APK**. The separate diagnostic-app project builds an APK that loads only its own diagnostic JNI library, reports device/build details, and saves its own display preference. It does not load the game-dependent library or inspect or modify the installed game.
+
+Detailed findings: [anti-cheat audit](ANTIBAN_AUDIT.md), [DNS audit](DNS_AUDIT.md), [compatibility report](COMPATIBILITY_REPORT.md), and [Termux/build guide](TERMUX_BUILD.md). The current audit build logs are under `artifacts/logs/` in this workspace.
 
 ## Verified build
 
-The source was compiled with Android NDK 29.0.13846066 on Windows, targeting arm64-v8a and Android API 26. The resulting libAkSoundEngine2.so is an ELF64 AArch64 shared object with an exported JNI_OnLoad. The full build log is artifacts/logs/ndk-build-arm64-windows.log in this workspace. The standalone diagnostic APK was built with JDK 17, Gradle 8.14.6, Android Gradle Plugin 8.13.2, and compile SDK 36; its build log is artifacts/logs/diagnostic-apk-gradle.log.
+The source was compiled with Android NDK 29.0.13846066 on Windows, targeting arm64-v8a and Android API 26. The resulting libAkSoundEngine2.so is an ELF64 AArch64 shared object with an exported JNI_OnLoad. The audit build log is artifacts/logs/ndk-build-arm64-audit.log in this workspace. The standalone diagnostic APK was built with JDK 17, Gradle 8.14.6, Android Gradle Plugin 8.13.2, compile SDK 36, CMake 4.3.1, and Ninja 1.13.2; its audit log is artifacts/logs/diagnostic-apk-gradle-audit.log.
 
 These checks establish that the files build and are correctly packaged. **No Android device or current Mobile Legends installation was available for runtime testing.** The library's compatibility with any current game release is unverified.
 
@@ -59,7 +61,7 @@ cd diagnostic-app
 sh ./gradlew :app:assembleDebug
 ~~~
 
-On Windows use .\gradlew.bat :app:assembleDebug. The result is diagnostic-app/app/build/outputs/apk/debug/app-debug.apk. It is a separately packaged and debug-signed APK. Its manifest requests no permissions, and it contains no native game library. The Gradle wrapper pins Gradle 8.14.6 and its distribution SHA-256; AGP is pinned to 8.13.2. The [AGP 8.13 compatibility table](https://developer.android.com/build/releases/agp-8-13-0-release-notes) specifies JDK 17 and Gradle 8.13 or newer.
+On Windows use .\gradlew.bat :app:assembleDebug. The result is diagnostic-app/app/build/outputs/apk/debug/app-debug.apk. It is a separately packaged and debug-signed APK. Its manifest requests no permissions; it contains only its own ARM64 native diagnostic library, not the game-dependent library. The Gradle wrapper pins Gradle 8.14.6 and its distribution SHA-256; AGP is pinned to 8.13.2. CMake 4.3.1 and Ninja 1.13.2 are needed for the JNI module. The [AGP 8.13 compatibility table](https://developer.android.com/build/releases/agp-8-13-0-release-notes) specifies JDK 17 and Gradle 8.13 or newer.
 
 The APK build was verified on Windows. The Android SDK build tools bundled for desktop hosts are not a verified on-device Termux APK build path.
 
