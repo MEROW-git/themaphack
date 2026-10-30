@@ -49,9 +49,18 @@ void HideMenu(bool& bShow) {
 void loadConfig() {
     int fd = open("/storage/emulated/0/Android/data/com.mobile.legends/tmh.ini", O_RDONLY);
     if (fd < 0) return;
-        read(fd, &Config, sizeof(Config));
-        read(fd, &Aim, sizeof(Aim));
-        read(fd, &SetFieldOfView, sizeof(SetFieldOfView));
+        auto config = Config;
+        auto aim = Aim;
+        auto fieldOfView = SetFieldOfView;
+        if (read(fd, &config, sizeof(config)) != sizeof(config) ||
+            read(fd, &aim, sizeof(aim)) != sizeof(aim) ||
+            read(fd, &fieldOfView, sizeof(fieldOfView)) != sizeof(fieldOfView)) {
+            close(fd);
+            return;
+        }
+        Config = config;
+        Aim = aim;
+        SetFieldOfView = fieldOfView;
         unsigned char viewSettings[6] = {};
         LaylaViewEnabled = false;
         LaylaViewPreset = 0;

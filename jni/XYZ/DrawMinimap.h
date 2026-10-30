@@ -37,7 +37,7 @@ std::string CekBattle(bool state){
 
 void RenderESP(ImDrawList *draw, int screenWidth, int screenHeight) {
     ImVec2 minimapSize(minimapWidth, minimapHeight);
-    void *BattleBridge_Instance, *BattleManager_Instance, *LogicBattleManager_Instance;
+    void *BattleBridge_Instance = nullptr, *BattleManager_Instance = nullptr, *LogicBattleManager_Instance = nullptr;
     Il2CppGetStaticFieldValue("Assembly-CSharp.dll", "", "BattleData", "m_BattleBridge", &BattleBridge_Instance);
     if (BattleBridge_Instance) {
         auto _bStartBattle = *(bool *)((uintptr_t)BattleBridge_Instance + BattleBridge_bStartBattle());

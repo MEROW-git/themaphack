@@ -26,7 +26,7 @@ struct {
 } RoomInfoZ;
 
 void RoomInfoList2() {
-    void *LogicBattleManager_Instance;
+    void *LogicBattleManager_Instance = nullptr;
     Il2CppGetStaticFieldValue("Assembly-CSharp.dll", "", "LogicBattleManager", "Instance", &LogicBattleManager_Instance);
     if (LogicBattleManager_Instance) {
         int iBattleState = GetBattleState();

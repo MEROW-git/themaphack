@@ -1,5 +1,7 @@
 # Android and game compatibility report
 
+This earlier general audit predates the [2.2.16-specific audit](COMPATIBILITY_2.2.16.md). Use the latter for current build artifacts and source fixes.
+
 This report records source inspection and a Windows cross-build for Android ARM64. **VERIFIED** means observed in source/build output, **UNVERIFIED** means no exact-version game/device test, **BROKEN** means a concrete defect, and **NOT IMPLEMENTED** means no active integration. Build success does not establish game compatibility.
 
 ## Build and packaging

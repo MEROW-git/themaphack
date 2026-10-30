@@ -182,7 +182,7 @@ double get_m_AttkSpeed(void* thiz){
 DefineHook(void, UpdateMapHack, (void * pThis)) {
     //AimEnemy = GetEnemyPosAimPredict(pThis);
     if (pThis != NULL) {
-        void *BattleBridge_Instance, *BattleManager_Instance;
+        void *BattleBridge_Instance = nullptr, *BattleManager_Instance = nullptr;
         Il2CppGetStaticFieldValue("Assembly-CSharp.dll", "", "BattleData", "m_BattleBridge", &BattleBridge_Instance);
         if (BattleBridge_Instance) {
             Il2CppGetStaticFieldValue("Assembly-CSharp.dll", "", "BattleManager", "Instance", &BattleManager_Instance);

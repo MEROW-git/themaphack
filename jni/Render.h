@@ -180,10 +180,12 @@ void Render()
 	
     if (screenWidth < glWidth && screenHeight < glHeight) setRes(glWidth, glHeight);
     
-    // set the unity screen resolution to fix touch issue
+    // Changing the host game's resolution is unverified for this release.
+#if defined(TMH_ENABLE_UNVERIFIED_GAME_RENDERING)
     if (screenWidth != Screen::get_width() || screenHeight != Screen::get_height()) {
         Screen::SetResolution(screenWidth, screenHeight, true);
     }
+#endif
     
     ImGui_GetTouch(io, screenHeight);
     
@@ -199,7 +201,11 @@ void Render()
 	if (showMenu) DrawMenu();
 	UpdateLaylaView();
 
+    // Game object layouts and method signatures have no 2.2.16 validation data.
+    // Fail closed until an authorized runtime audit validates every dependency.
+#if defined(TMH_ENABLE_UNVERIFIED_GAME_RENDERING)
     if (bFullChecked) NewDrawESP(ImGui::GetBackgroundDrawList(), screenWidth, screenHeight);
+#endif
 	
 	if (selectedFeatures == 2){
 		//Tools::Hook((void *) ShowSelfPlayer_TryUseSkill2, (reinterpret_cast<void *>(TryUseSkill2)), (void **) &orig_TryUseSkill2);

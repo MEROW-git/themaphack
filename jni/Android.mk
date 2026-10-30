@@ -1,5 +1,9 @@
 LOCAL_PATH := $(call my-dir)
 
+ifneq ($(TARGET_ARCH_ABI),arm64-v8a)
+$(error This project currently builds only for arm64-v8a)
+endif
+
 include $(CLEAR_VARS)
 LOCAL_MODULE := libdobby
 LOCAL_SRC_FILES := Tools/Dobby/libraries/$(TARGET_ARCH_ABI)/libdobby.a
@@ -17,7 +21,7 @@ LOCAL_LDFLAGS += -Wl,--gc-sections
 LOCAL_LDLIBS := -llog -landroid -lEGL -lGLESv2 -lGLESv3 -ldl -lz
 
 LOCAL_SRC_FILES := imgui/imgui.cpp    \
-    imgui/imgui_draw.cpp\
+    imgui/imgui_draw.cpp \
     imgui/imgui_tables.cpp \
     imgui/imgui_widgets.cpp \
     imgui/backends/imgui_impl_android.cpp \

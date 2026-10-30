@@ -42,16 +42,20 @@ uintptr_t Input_get_mousePosition(){
 }
 
 int get_touchCount() {
-	return reinterpret_cast<int(__fastcall *)()>(Input_get_touchCount())();
+	auto fn = reinterpret_cast<int (*)()>(Input_get_touchCount());
+	return fn ? fn() : 0;
 }
 
 Vector3 get_mousePosition(void *instance) {
-	return reinterpret_cast<Vector3(__fastcall *)(void *)>(Input_get_mousePosition())(instance);
+	auto fn = reinterpret_cast<Vector3 (*)(void *)>(Input_get_mousePosition());
+	return fn ? fn(instance) : Vector3();
 }
 
 void ImGui_GetTouch(ImGuiIO* io, int screenHeight) {
-    if (get_touchCount() > 0) {
-        UnityEngine_Touch_Fields touch = ((UnityEngine_Touch_Fields (*)(void *, int))(Input_GetTouch()))((void *)0, 0);
+    if (!io) return;
+    auto getTouch = reinterpret_cast<UnityEngine_Touch_Fields (*)(void *, int)>(Input_GetTouch());
+    if (getTouch && get_touchCount() > 0) {
+        UnityEngine_Touch_Fields touch = getTouch(nullptr, 0);
         switch (touch.m_Phase) {
         case TouchPhase::Began:
         case TouchPhase::Stationary:

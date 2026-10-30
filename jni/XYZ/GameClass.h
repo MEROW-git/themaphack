@@ -22,19 +22,19 @@ class Screen {
     public:
     static void SetResolution(int width, int height, bool fullscreen) {
         auto _ = reinterpret_cast<void(*)(int , int , bool )>((uintptr_t)Screen_SetResolution());
-        return _(width,height,fullscreen);
+        if (_) _(width,height,fullscreen);
     }
     static int get_width() {
         auto _ = reinterpret_cast<int(*)()>((uintptr_t)Screen_get_width());
-        return _();
+        return _ ? _() : 0;
     }
     static int get_height() {
         auto _ = reinterpret_cast<int(*)()>((uintptr_t)Screen_get_height());
-        return _();
+        return _ ? _() : 0;
     }
-	static int get_dpi() {
+	static float get_dpi() {
         auto _ = reinterpret_cast<float(*)()>((uintptr_t)Screen_get_dpi());
-        return _();
+        return _ ? _() : 0.0f;
     }
 };
 
@@ -161,7 +161,8 @@ uintptr_t SystemData_m_uiID() {
 }
 
 List<uintptr_t> *GetBattlePlayerInfo() {
-    return reinterpret_cast<List<uintptr_t> *(__fastcall *)(void *)>(SystemData_GetBattlePlayerInfo())((void *)0);
+    auto fn = reinterpret_cast<List<uintptr_t> *(*)(void *)>(SystemData_GetBattlePlayerInfo());
+    return fn ? fn(nullptr) : nullptr;
 }
 
 uintptr_t RoomData_uiHeroIDChoose(){
@@ -513,70 +514,92 @@ uintptr_t EntityBase_get_m_Level(){
 #define ShowSyncFighter_get_m_AttkSpeed (uintptr_t) Il2CppGetMethodOffset("Assembly-CSharp.dll", "", "ShowSyncFighter", "get_m_AttkSpeed")
 
 void *get_main() {
-    return reinterpret_cast<void *(__fastcall *)()>(Camera_get_main())();
+    auto fn = reinterpret_cast<void *(*)()>(Camera_get_main());
+    return fn ? fn() : nullptr;
 }
 
 float get_fieldOfView() {
-    return reinterpret_cast<float(__fastcall *)(void *)>(Camera_get_fieldOfView())(get_main());
+    auto fn = reinterpret_cast<float (*)(void *)>(Camera_get_fieldOfView());
+    void *camera = get_main();
+    return fn && camera ? fn(camera) : 0.0f;
 }
 
 void *set_fieldOfView(float value) {
-    return reinterpret_cast<void *(__fastcall *)(void *, float)>(Camera_set_fieldOfView())(get_main(), value);
+    auto fn = reinterpret_cast<void (*)(void *, float)>(Camera_set_fieldOfView());
+    void *camera = get_main();
+    if (fn && camera) fn(camera, value);
+    return camera;
 }
 
 Vector3 WorldToScreen(Vector3 position) {
-    return reinterpret_cast<Vector3(__fastcall *)(void *, Vector3)>(Camera_WorldToScreenPoint())(get_main(), position);
+    auto fn = reinterpret_cast<Vector3 (*)(void *, Vector3)>(Camera_WorldToScreenPoint());
+    void *camera = get_main();
+    return fn && camera ? fn(camera, position) : Vector3();
 }
 
 int GetBattleState() {
-	auto instance = *(uintptr_t *) ((uintptr_t)LogicBattleManager_Instan());
+    auto address = LogicBattleManager_Instan();
+    if (!address || address == size_t(-1)) return 0;
+	auto instance = *(uintptr_t *) ((uintptr_t)address);
     if (!instance) return 0;
-    return reinterpret_cast<int(__fastcall *)(void*)>(LogicBattleManager_GetBattleState())((void*)instance);
+    auto fn = reinterpret_cast<int (*)(void*)>(LogicBattleManager_GetBattleState());
+    return fn ? fn((void*)instance) : 0;
 }
 
 uintptr_t GetPlayerLogic(uint id) {
-    auto instance = *(uintptr_t *) ((uintptr_t)LogicBattleManager_Instan());
+    auto address = LogicBattleManager_Instan();
+    if (!address || address == size_t(-1)) return 0;
+    auto instance = *(uintptr_t *) ((uintptr_t)address);
     if (!instance) return 0;
-    return reinterpret_cast<uintptr_t(__fastcall *)(void *, uint)>(LogicBattleManager_GetPlayerLogic())((void *)instance, id);
+    auto fn = reinterpret_cast<uintptr_t (*)(void *, uint)>(LogicBattleManager_GetPlayerLogic());
+    return fn ? fn((void *)instance, id) : 0;
 }
 
 int GetCoolTime(void* instance) {
-    return reinterpret_cast<int(__fastcall *)(void *)>(CoolDownData_GetCoolTime)(instance);
+    auto fn = reinterpret_cast<int (*)(void *)>(CoolDownData_GetCoolTime);
+    return fn && instance ? fn(instance) : 0;
 }
 
 void *ShowEntity_get_logicFighter(void *instance) {
-    return reinterpret_cast<void*(__fastcall *)(void *)>(ShowEntity_get__logicFighter)(instance);
+    auto fn = reinterpret_cast<void* (*)(void *)>(ShowEntity_get__logicFighter);
+    return fn && instance ? fn(instance) : nullptr;
 }
 
 bool get_InTransformation(void* instance) {
-    return reinterpret_cast<bool(__fastcall *)(void *)>(ShowEntity_get_InTransformation)(instance);
+    auto fn = reinterpret_cast<bool (*)(void *)>(ShowEntity_get_InTransformation);
+    return fn && instance ? fn(instance) : false;
 }
 
 uintptr_t GetPlayerRealSelf() {
-    void* instance;
+    void* instance = nullptr;
     Il2CppGetStaticFieldValue("Assembly-CSharp.dll", "", "LogicBattleManager", "Instance", &instance);
     if (instance == NULL) return 0;
-    return reinterpret_cast<uintptr_t(__fastcall *)(void *)>(LogicBattleManager_GetPlayerRealSelf())((void *)instance);
+    auto fn = reinterpret_cast<uintptr_t (*)(void *)>(LogicBattleManager_GetPlayerRealSelf());
+    return fn ? fn(instance) : 0;
 }
 
 Vector3 ShowEntity_get_Position(void *instance) {
-    return reinterpret_cast<Vector3(__fastcall *)(void *)>(ShowEntity_getPosition())(instance);
+    auto fn = reinterpret_cast<Vector3 (*)(void *)>(ShowEntity_getPosition());
+    return fn && instance ? fn(instance) : Vector3();
 }
 
 Vector3 ShowEntity_GetPosition(void *uiy) {
-	return reinterpret_cast<Vector3(__fastcall *)(void *)>(ShowEntity_getPosition())(uiy);
+	return ShowEntity_get_Position(uiy);
 }
 
 void *iLogicBattleManager(void *instance) {
-    return reinterpret_cast<void * (__fastcall *)(void *)>(LogicBattleEndCtrl_get_logicBattleManager())(instance);
+    auto fn = reinterpret_cast<void * (*)(void *)>(LogicBattleEndCtrl_get_logicBattleManager());
+    return fn && instance ? fn(instance) : nullptr;
 }
 
 Dictionary<void*, void*> *get_Players(){
-	return reinterpret_cast<Dictionary<void*, void*> *(*)()>(BattleManager_m_dicPlayerShow())();
+    auto fn = reinterpret_cast<Dictionary<void*, void*> *(*)()>(BattleManager_m_dicPlayerShow());
+    return fn ? fn() : nullptr;
 }
 
 Dictionary<void*, void*> *get_Monsters(){
-	return reinterpret_cast<Dictionary<void*, void*> *(*)()>(BattleManager_m_dicMonsterShow())();
+    auto fn = reinterpret_cast<Dictionary<void*, void*> *(*)()>(BattleManager_m_dicMonsterShow());
+    return fn ? fn() : nullptr;
 }
 
 #define AntiCheatReporter_StartBattle (uintptr_t) Il2CppGetMethodOffset("Assembly-CSharp.dll", "", "AntiCheatReporter", "StartBattle")

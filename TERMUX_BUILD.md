@@ -1,5 +1,7 @@
 # Android ARM64 build and validation
 
+For the October 2026 target audit, see [COMPATIBILITY_2.2.16.md](COMPATIBILITY_2.2.16.md) and the [interface inventory](UNVERIFIED_GAME_INTERFACES.md).
+
 The native target is `libAkSoundEngine2.so`. It is not an installable APK. The independent `diagnostic-app` APK tests its own harmless JNI library and saves a display preference; it neither loads the game-dependent library nor modifies Mobile Legends.
 
 The optional camera presets and their test limits are described in [LAYLA_VIEW.md](LAYLA_VIEW.md).
@@ -40,7 +42,7 @@ On a supported desktop host, install NDK 29.0.13846066. From PowerShell in the r
 & "$env:LOCALAPPDATA\Android\Sdk\ndk\29.0.13846066\ndk-build.cmd" -C . NDK_OUT=artifacts/obj NDK_LIBS_OUT=artifacts/libs APP_ABI=arm64-v8a -B -j4
 ```
 
-**VERIFIED:** The current Layla View build succeeded on Windows. Full log: `artifacts/logs/ndk-build-arm64-layla-view.log`. The ELF header reports `ELF64`, `AArch64`, shared object; its dynamic symbol table exports `JNI_OnLoad`. SHA-256: `ce30d8210cb66ef1dd10a3162b58b3183ea45c44d73f8e082d234c0f1d2c67f2`. Artifact: `artifacts/libs/arm64-v8a/libAkSoundEngine2.so` (5,733,144 bytes). The earlier audit log remains at `artifacts/logs/ndk-build-arm64-audit.log`.
+**VERIFIED:** The current 2.2.16 source audit cross-build succeeded on Windows. Full verbose log: `artifacts/logs/ndk-build-arm64-2.2.16-full.log`. The ELF header reports `ELF64`, `AArch64`, shared object; its dynamic symbol table exports `JNI_OnLoad`. Artifact: `artifacts/libs/arm64-v8a/libAkSoundEngine2.so` (5,705,432 bytes), SHA-256 `7a6533825870609ff62683aceb1ae08157071d84ee67c9255403535bf11b7e94`. No game runtime was tested.
 
 ## Build the separate diagnostic APK
 
@@ -66,3 +68,5 @@ The first attempt to use Gradle's `ndkBuild` integration failed on this Windows 
 | UNVERIFIED | Native library loads poorly, overlay missing, or game crashes | Inspect logcat for `JNI_OnLoad`, `libTMH.bytes`, `liblogic.so`, IL2CPP and EGL failures. Validate against legally obtained exact-version game binaries/metadata in a permitted test environment; do not infer compatibility from the build. |
 
 Generated outputs and logs under `artifacts/` are ignored by Git and remain in this workspace. `artifacts/SHA256SUMS` records the two delivered artifact hashes. No device runtime or anti-cheat behavior was tested.
+
+To refresh the source lookup inventory, run `python tools/audit_il2cpp_lookups.py`. The prior host-only camera state test is in `tests/camera_view_state_test.cpp`; a successful Android cross-compile of that test verifies C++ syntax, while execution requires an Android device or a host C++ toolchain. The default native build omits unverified game ESP and host screen-resolution mutation.

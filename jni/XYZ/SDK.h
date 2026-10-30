@@ -4,19 +4,23 @@ class ShowEntityBase {
     public:
     
     bool m_bDeath() {
-        return *(bool *) ((uintptr_t) this + Il2CppGetFieldOffset("Assembly-CSharp.dll", "Battle", "EntityBase", "<m_bDeath>k__BackingField"));
+        auto offset = Il2CppGetFieldOffset("Assembly-CSharp.dll", "Battle", "EntityBase", "<m_bDeath>k__BackingField");
+        return offset != size_t(-1) ? *(bool *) ((uintptr_t) this + offset) : false;
     }
 
     bool m_bSameCampType() {
-        return *(bool *) ((uintptr_t) this + Il2CppGetFieldOffset("Assembly-CSharp.dll", "Battle", "EntityBase", "m_bSameCampType"));
+        auto offset = Il2CppGetFieldOffset("Assembly-CSharp.dll", "Battle", "EntityBase", "m_bSameCampType");
+        return offset != size_t(-1) ? *(bool *) ((uintptr_t) this + offset) : false;
     }
     
     int m_Hp() {
-        return *(int *) ((uintptr_t) this + Il2CppGetFieldOffset("Assembly-CSharp.dll", "Battle", "EntityBase", "m_Hp"));
+        auto offset = Il2CppGetFieldOffset("Assembly-CSharp.dll", "Battle", "EntityBase", "m_Hp");
+        return offset != size_t(-1) ? *(int *) ((uintptr_t) this + offset) : 0;
     }
     
     int m_HpMax() {
-        return *(int *) ((uintptr_t) this + Il2CppGetFieldOffset("Assembly-CSharp.dll", "Battle", "EntityBase", "m_HpMax"));
+        auto offset = Il2CppGetFieldOffset("Assembly-CSharp.dll", "Battle", "EntityBase", "m_HpMax");
+        return offset != size_t(-1) ? *(int *) ((uintptr_t) this + offset) : 0;
     }
 };
 
@@ -24,7 +28,8 @@ class ShowEntity : public ShowEntityBase {
     public:
     
     String *m_RoleName() {
-        return *(String **) ((uintptr_t) this + Il2CppGetFieldOffset("Assembly-CSharp.dll", "", "ShowEntity", "m_RoleName"));
+        auto offset = Il2CppGetFieldOffset("Assembly-CSharp.dll", "", "ShowEntity", "m_RoleName");
+        return offset != size_t(-1) ? *(String **) ((uintptr_t) this + offset) : nullptr;
     }
 };
 
@@ -34,23 +39,23 @@ std::map<std::string, uintptr_t> Fields;
 std::map<std::string, uintptr_t> Methods;
 
 static void *GetPlayerSelf(void *thiz){
-    auto *(*LogicBattleManagerZ_GetPlayerRealSelf)(void *nul) = (void *(*)(void *))(Il2CppGetMethodOffset("Assembly-CSharp.dll", "", "LogicBattleManager", "GetPlayerRealSelf"));
-    return LogicBattleManagerZ_GetPlayerRealSelf(thiz);
+    auto fn = reinterpret_cast<void *(*)(void *)>(Il2CppGetMethodOffset("Assembly-CSharp.dll", "", "LogicBattleManager", "GetPlayerRealSelf"));
+    return fn && thiz ? fn(thiz) : nullptr;
 }
 
 static Vector3 Player_position(void *thiz) {
-    auto (*LogicFighter_get_Position)(void *players) = (Vector3 (*)(void *))(Il2CppGetMethodOffset("Assembly-CSharp.dll", "Battle", "LogicFighter", "get_Position"));
-    return LogicFighter_get_Position(thiz);
+    auto fn = reinterpret_cast<Vector3 (*)(void *)>(Il2CppGetMethodOffset("Assembly-CSharp.dll", "Battle", "LogicFighter", "get_Position"));
+    return fn && thiz ? fn(thiz) : Vector3();
 }
 
 static int GetCampType(void *thiz,void *entity,bool benemy){
-    auto (*LogicBattleManager_GetCampType)(void *,void*,bool) = (uintptr_t (*)(void *,void*,bool))(Il2CppGetMethodOffset("Assembly-CSharp.dll", "", "LogicBattleManager", "GetCampType", 2));
-    return LogicBattleManager_GetCampType(thiz,entity,benemy);
+    auto fn = reinterpret_cast<int (*)(void *, void *, bool)>(Il2CppGetMethodOffset("Assembly-CSharp.dll", "", "LogicBattleManager", "GetCampType", 2));
+    return fn && thiz && entity ? fn(thiz, entity, benemy) : 0;
 }
 
 static int Player_GetTotalHP(void *thiz){
-    auto (*LogicFighter_GetTotalHp)(void*_thiz)= (uintptr_t(*)(void*))(LogicFighter__GetTotalHp);
-    return LogicFighter_GetTotalHp(thiz);
+    auto fn = reinterpret_cast<int (*)(void *)>(LogicFighter__GetTotalHp);
+    return fn && thiz ? fn(thiz) : 0;
 }
 
 

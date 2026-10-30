@@ -280,7 +280,12 @@ void *g_Il2CppInitFunc, *g_Il2CppSymFunc;
 
 jint (JNICALL *Real_JNI_OnLoad)(JavaVM *vm, void *reserved);
 JNIEXPORT jint JNICALL Call_JNI_OnLoad(JavaVM *vm, void *reserved) {
-    std::string apkPkg = getPackageName(GetJNIEnv(g_vm));
+    JNIEnv *env = nullptr;
+    if (!vm || vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK || !env) {
+        LOGE("JNI environment is unavailable during library initialization");
+        return JNI_ERR;
+    }
+    std::string apkPkg = getPackageName(env);
     if (apkPkg.empty()) {
         LOGE("Unable to determine host package name");
         return JNI_ERR;
@@ -288,7 +293,9 @@ JNIEXPORT jint JNICALL Call_JNI_OnLoad(JavaVM *vm, void *reserved) {
     std::string fromPath = std::string("/sdcard/Android/data/") + apkPkg.c_str() + std::string("/files/dragon2017/assets/comlibs/") + std::string(ARCH) + std::string("/libTMH.bytes");
     std::string toPath = std::string("/data/user/0/") + apkPkg.c_str() + std::string("/app_libs/libTMH.bytes");
  
-    CopyFile(fromPath.c_str(), toPath.c_str());
+    if (!CopyFile(fromPath.c_str(), toPath.c_str())) {
+        LOGE("Could not copy required libTMH.bytes; attempting its original path");
+    }
     if (!g_Il2CppInitFunc)g_Il2CppInitFunc = dlopen(toPath.c_str(), RTLD_LAZY);
     if (!g_Il2CppInitFunc)g_Il2CppInitFunc = dlopen(fromPath.c_str(), RTLD_LAZY);
         
@@ -308,6 +315,7 @@ JNIEXPORT jint JNICALL Call_JNI_OnLoad(JavaVM *vm, void *reserved) {
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
+    if (!vm) return JNI_ERR;
     g_vm = vm;
     JNIEnv *env;
     if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK) {

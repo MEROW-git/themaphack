@@ -2,13 +2,13 @@
 
 This repository builds an Android ARM64 native library, **not an installable game APK**. The separate diagnostic-app project builds an APK that loads only its own diagnostic JNI library, reports device/build details, and saves its own display preference. It does not load the game-dependent library or inspect or modify the installed game.
 
-Detailed findings: [anti-cheat audit](ANTIBAN_AUDIT.md), [DNS audit](DNS_AUDIT.md), [compatibility report](COMPATIBILITY_REPORT.md), and [Termux/build guide](TERMUX_BUILD.md). The current audit build logs are under `artifacts/logs/` in this workspace.
+Detailed findings: [MLBB 2.2.16 audit](COMPATIBILITY_2.2.16.md), [unverified interface inventory](UNVERIFIED_GAME_INTERFACES.md), [anti-cheat audit](ANTIBAN_AUDIT.md), [DNS audit](DNS_AUDIT.md), and [Termux/build guide](TERMUX_BUILD.md). The current audit build logs are under `artifacts/logs/` in this workspace.
 
 The optional **Layla View** camera presets are documented in [LAYLA_VIEW.md](LAYLA_VIEW.md). The feature builds for ARM64; live game behavior is unverified.
 
 ## Verified build
 
-The source was compiled with Android NDK 29.0.13846066 on Windows, targeting arm64-v8a and Android API 26. The resulting libAkSoundEngine2.so is an ELF64 AArch64 shared object with an exported JNI_OnLoad. The current build log is artifacts/logs/ndk-build-arm64-layla-view.log in this workspace. The standalone diagnostic APK was built with JDK 17, Gradle 8.14.6, Android Gradle Plugin 8.13.2, compile SDK 36, CMake 4.3.1, and Ninja 1.13.2; its audit log is artifacts/logs/diagnostic-apk-gradle-audit.log.
+The source was compiled with Android NDK 29.0.13846066 on Windows, targeting arm64-v8a and Android API 26. The resulting libAkSoundEngine2.so is an ELF64 AArch64 shared object with an exported JNI_OnLoad. The current complete build log is artifacts/logs/ndk-build-arm64-2.2.16-full.log in this workspace. The standalone diagnostic APK was built with JDK 17, Gradle 8.14.6, Android Gradle Plugin 8.13.2, compile SDK 36, CMake 4.3.1, and Ninja 1.13.2; its earlier audit log is artifacts/logs/diagnostic-apk-gradle-audit.log.
 
 These checks establish that the files build and are correctly packaged. **No Android device or current Mobile Legends installation was available for runtime testing.** The library's compatibility with any current game release is unverified.
 

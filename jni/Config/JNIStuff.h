@@ -205,6 +205,7 @@ const char *GetDeviceUniqueIdentifier(JNIEnv *env, const char *uuid) {
 }
 
 std::string getPackageName(JNIEnv *env) {
+	if (!env) return {};
 	jobject context = getJNIContext(env);
     if (!context || env->ExceptionCheck()) return {};
     jclass contextClass = env->GetObjectClass(context);
@@ -257,7 +258,9 @@ bool removeFilesExcept(JNIEnv *env, const std::vector<std::string>& filesToKeep)
 
 bool CopyFile(const char *in, const char *out) {
     std::ifstream src(in, std::ios::binary);
+    if (!src) return false;
     std::ofstream dest(out, std::ios::binary);
+    if (!dest) return false;
     dest << src.rdbuf();
     return src && dest;
 }
